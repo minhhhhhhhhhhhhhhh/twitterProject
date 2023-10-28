@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken'
 import { config } from 'dotenv'
+import { TokenPayload } from '~/models/requests/User.request'
 config()
 //privateKey là password để được quyền tạo chữ ký jwt
 export const signToken = ({
@@ -26,10 +27,10 @@ export const verifyToken = ({
   token: string
   secretKeyOrPublicKey?: string
 }) => {
-  return new Promise<jwt.JwtPayload>((resolve, reject) => {
+  return new Promise<TokenPayload>((resolve, reject) => {
     jwt.verify(token, secretKeyOrPublicKey, (error, decoded) => {
       if (error) throw reject(error)
-      resolve(decoded as jwt.JwtPayload)
+      resolve(decoded as TokenPayload)
     })
   })
 }

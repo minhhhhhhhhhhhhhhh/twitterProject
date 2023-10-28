@@ -1,11 +1,15 @@
 import { NextFunction, Request, Response } from 'express'
 import usersService from '~/services/users.services'
 import { ParamsDictionary } from 'express-serve-static-core'
-import { RegisterReqBody } from '~/models/requests/User.request'
+import { LoginReqBody, LogoutReqBody, RegisterReqBody } from '~/models/requests/User.request'
 import User from '~/models/schemas/User.schema'
 import { ObjectId } from 'mongodb'
 import { USERS_MESSAGES } from '~/constants/messages'
-export const loginController = async (req: Request, res: Response, next: NextFunction) => {
+export const loginController = async (
+  req: Request<ParamsDictionary, any, LoginReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
   //vào req lấy user ra và lấy _id của user đó
   const user = req.user as User
   const user_id = user._id as ObjectId
@@ -31,7 +35,11 @@ export const registerController = async (
   })
 }
 
-export const logoutController = async (req: Request, res: Response, next: NextFunction) => {
+export const logoutController = async (
+  req: Request<ParamsDictionary, any, LogoutReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
   //lấy refresh token từ req.body
   const { refresh_token } = req.body
   //xóa refresh token trong database
