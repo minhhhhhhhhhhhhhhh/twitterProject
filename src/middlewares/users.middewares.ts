@@ -188,10 +188,7 @@ export const accessTokenValidator = validate(
   checkSchema(
     {
       Authorization: {
-        notEmpty: {
-          //kiểm tra có gữi lên không
-          errorMessage: USERS_MESSAGES.ACCESS_TOKEN_IS_REQUIRED
-        },
+        trim: true,
         custom: {
           //value là giá trị của Authorization, req là req của client gữi lên server
           options: async (value: string, { req }) => {
@@ -210,7 +207,10 @@ export const accessTokenValidator = validate(
             //nếu xuống đc đây thì tức là accessToken có rồi
             //cần verify nó có hợp lệ hay không và lấy payload ra lưu vào req
             try {
-              const decoded_authorization = await verifyToken({ token: access_token })
+              const decoded_authorization = await verifyToken({
+                token: access_token,
+                secretKeyOrPublicKey: process.env.JWT_SECRET_ACCESS_TOKEN as string
+              })
               ;(req as Request).decoded_authorization = decoded_authorization
             } catch (err) {
               throw new ErrorWithStatus({
@@ -232,14 +232,11 @@ export const refreshTokenValidator = validate(
     {
       refresh_token: {
         trim: true,
-        notEmpty: {
-          errorMessage: USERS_MESSAGES.REFRESH_TOKEN_IS_REQUIRED
-        },
         custom: {
           options: async (value, { req }) => {
             try {
               const [decoded_refresh_token, refresh_token] = await Promise.all([
-                verifyToken({ token: value }),
+                verifyToken({ token: value, secretKeyOrPublicKey: process.env.JWT_SECRET_REFRESH_TOKEN as string }),
                 databaseService.refreshTokens.findOne({
                   token: value
                 })
