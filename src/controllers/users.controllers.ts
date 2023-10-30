@@ -1,10 +1,18 @@
 import { NextFunction, Request, Response } from 'express'
 import usersService from '~/services/users.services'
 import { ParamsDictionary } from 'express-serve-static-core'
-import { LoginReqBody, LogoutReqBody, RegisterReqBody } from '~/models/requests/User.request'
+import {
+  EmailVerifyReqBody,
+  LoginReqBody,
+  LogoutReqBody,
+  RegisterReqBody,
+  TokenPayload
+} from '~/models/requests/User.request'
 import User from '~/models/schemas/User.schema'
 import { ObjectId } from 'mongodb'
 import { USERS_MESSAGES } from '~/constants/messages'
+import HTTP_STATUS from '~/constants/httpStatus'
+import databaseService from '~/services/database.services'
 export const loginController = async (
   req: Request<ParamsDictionary, any, LoginReqBody>,
   res: Response,
@@ -45,4 +53,27 @@ export const logoutController = async (
   //xóa refresh token trong database
   const result = await usersService.logout(refresh_token)
   res.json(result)
+}
+
+export const emailVerifyController = async (
+  req: Request<ParamsDictionary, any, EmailVerifyReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  //khi mà req vào được đây nghĩa là email_verify_token đã được verify
+  //đồng thời trong req sẽ có decoded_email_verify_token
+  const { user_id } = req.decoded_email_verify_token as TokenPayload
+  //tìm xem user có tồn tại không
+  const user = await databaseService.users.findOne({ _id: new ObjectId(user_id) })
+  if (!user) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({ message: USERS_MESSAGES.USER_NOT_FOUND })
+  }
+  //nếu có user đó thì mình sẽ kiểm tra xem user đó lưu email_verify_token không
+  if (user.email_verify_token === '') {
+    return res.json({ message: USERS_MESSAGES.EMAIL_ALREADY_VERIFIED })
+  }
+  //nếu xuống được đây nghĩa là user tồn tại và chưa verify email
+  // verifyEmail(user_id): tìm user đó bằng user_id và update lại email_verify_token thành '' và verify: 1
+  const result = await usersService.verifyEmail(user_id)
+  return res.json({ result, message: USERS_MESSAGES.EMAIL_VERIFY_SUCCESS })
 }

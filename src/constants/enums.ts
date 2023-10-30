@@ -8,5 +8,5 @@ export enum TokenType {
   AccessToken,
   RefreshToken,
   ForgotPasswordToken,
-  EmailVerifycationToken
+  EmailVerificationToken
 }
