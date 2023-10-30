@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from 'express'
+import e, { NextFunction, Request, Response } from 'express'
 import usersService from '~/services/users.services'
 import { ParamsDictionary } from 'express-serve-static-core'
 import {
@@ -13,6 +13,7 @@ import { ObjectId } from 'mongodb'
 import { USERS_MESSAGES } from '~/constants/messages'
 import HTTP_STATUS from '~/constants/httpStatus'
 import databaseService from '~/services/database.services'
+import { UserVerifyStatus } from '~/constants/enums'
 export const loginController = async (
   req: Request<ParamsDictionary, any, LoginReqBody>,
   res: Response,
@@ -76,4 +77,31 @@ export const emailVerifyController = async (
   // verifyEmail(user_id): tìm user đó bằng user_id và update lại email_verify_token thành '' và verify: 1
   const result = await usersService.verifyEmail(user_id)
   return res.json({ result, message: USERS_MESSAGES.EMAIL_VERIFY_SUCCESS })
+}
+
+export const resendEmailVerifyController = async (req: Request, res: Response, next: NextFunction) => {
+  //khi đến đây thì accesstokenValidator đã chạy rồi => access_token đã đc decode
+  //và lưu vào req.user, nên trong đó sẽ có user._id để tao sử dụng
+  const { user_id } = req.decoded_authorization as TokenPayload //lấy user_id từ decoded_authorization
+  //từ user_id này ta sẽ tìm user trong database
+  const user = await databaseService.users.findOne({
+    _id: new ObjectId(user_id)
+  })
+  //nếu k có user thì trả về lỗi 404: not found
+  if (!user) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({
+      message: USERS_MESSAGES.USER_NOT_FOUND
+    })
+  }
+  //nếu user đã verify email trước đó rồi thì trả về lỗi 400: bad request
+  if (user.verify == UserVerifyStatus.Verified) {
+    return res.json({
+      message: USERS_MESSAGES.EMAIL_ALREADY_VERIFIED
+    })
+  }
+  //nếu user chưa verify email thì ta sẽ gữi lại email verify cho họ
+  //cập nhật email_verify_token mới và gữi lại email verify cho họ
+  const result = await usersService.resendEmailVerify(user_id)
+  //result chứa message nên ta chỉ cần trả  result về cho client
+  return res.json(result)
 }

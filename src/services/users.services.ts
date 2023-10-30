@@ -111,6 +111,25 @@ class UsersService {
     )
     return { access_token, refresh_token }
   }
+
+  async resendEmailVerify(user_id: string) {
+    //tạo email_verify_token mới và gữi lại email verify cho họ
+    const email_verify_token = await this.signEmailVerifyToken(user_id)
+    //update lại email_verify_token mới
+    await databaseService.users.updateOne(
+      { _id: new ObjectId(user_id) }, // tìm user đó bằng user_id
+      [
+        {
+          $set: {
+            email_verify_token,
+            updated_at: '$$NOW'
+          }
+        }
+      ]
+    )
+    console.log('email_verify_token', email_verify_token) //mô phỏng send email, test xong xóa
+    return { message: USERS_MESSAGES.RESEND_EMAIL_VERIFY_SUCCESS }
+  }
 }
 
 const usersService = new UsersService()
