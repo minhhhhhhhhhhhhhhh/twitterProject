@@ -181,7 +181,21 @@ class UsersService {
     }
   }
   //vào messages.ts thêm RESET_PASSWORD_SUCCESS: 'Reset password success'
+  async getMe(user_id: string) {
+    const user = await databaseService.users.findOne(
+      { _id: new ObjectId(user_id) },
+      {
+        projection: {
+          password: 0,
+          email_verify_token: 0,
+          forgot_password_token: 0
+        }
+      }
+    )
+    return user // sẽ k có những thuộc tính nêu trên, tránh bị lộ thông tin
+  }
 }
+//trong dó projection giúp ta loại bỏ lấy về các thuộc tính như password, email_verify_token, forgot_password_token
 
 const usersService = new UsersService()
 export default usersService
