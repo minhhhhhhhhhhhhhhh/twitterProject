@@ -3,10 +3,12 @@ import usersService from '~/services/users.services'
 import { ParamsDictionary } from 'express-serve-static-core'
 import {
   EmailVerifyReqBody,
+  ForgotPasswordReqBody,
   LoginReqBody,
   LogoutReqBody,
   RegisterReqBody,
-  TokenPayload
+  TokenPayload,
+  VerifyForgotPasswordReqBody
 } from '~/models/requests/User.request'
 import User from '~/models/schemas/User.schema'
 import { ObjectId } from 'mongodb'
@@ -105,3 +107,31 @@ export const resendEmailVerifyController = async (req: Request, res: Response, n
   //result chứa message nên ta chỉ cần trả  result về cho client
   return res.json(result)
 }
+
+export const forgotPasswordController = async (
+  req: Request<ParamsDictionary, any, ForgotPasswordReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  //middleware forgotPasswordValidator đã chạy rồi, nên ta có thể lấy _id từ user đã tìm đc bằng email
+  const { _id } = req.user as User
+  //cái _id này là objectid, nên ta phải chuyển nó về string
+  //chứ không truyền trực tiếp vào hàm forgotPassword
+  const result = await usersService.forgotPassword((_id as ObjectId).toString())
+  return res.json(result)
+}
+
+export const verifyForgotPasswordTokenController = async (
+  req: Request<ParamsDictionary, any, VerifyForgotPasswordReqBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  //nếu đã đến bước này nghĩa là ta đã tìm có forgot_password_token hợp lệ
+  //và đã lưu vào req.decoded_forgot_password_token
+  //thông tin của user
+  //ta chỉ cần thông báo rằng token hợp lệ
+  return res.json({
+    message: USERS_MESSAGES.VERIFY_FORGOT_PASSWORD_TOKEN_SUCCESS
+  })
+}
+//trong messages.ts thêm   VERIFY_FORGOT_PASSWORD_TOKEN_SUCCESS: 'Verify forgot password token success'
