@@ -28,15 +28,36 @@ class DatabaseService {
     //vào db lấy ra collection users, và vì chuỗi truyền vào có thể là undefined nên mình phải rằng buộc nó là string 'thử xóa as string để thấy lỗi'
   }
 
+  async indexUsers() {
+    const exists = await this.users.indexExists(['email_1', 'username_1', 'email_1_password_1', '_id_'])
+    if (exists) return
+
+    await this.users.createIndex({ email: 1 }, { unique: true })
+    await this.users.createIndex({ username: 1 }, { unique: true })
+    await this.users.createIndex({ email: 1, password: 1 })
+  }
+
   get refreshTokens(): Collection<RefreshToken> {
     return this.db.collection(process.env.DB_REFRESH_TOKENS_COLLECTION as string)
     //vào db lấy ra collection refresh tokens, và vì chuỗi truyền vào có thể là undefined nên mình phải rằng buộc nó là string 'thử xóa as string để thấy lỗi'
   }
 
+  async indexFreshTokens() {
+    const exists = await this.users.indexExists(['token_1', 'exp_1'])
+    if (exists) return
+    await this.refreshTokens.createIndex({ token: 1 })
+    await this.refreshTokens.createIndex({ exp: 1 }), { expireAfterSeconds: 0 } //TTL index
+  }
+
   get followers(): Collection<Follower> {
     return this.db.collection(process.env.DB_FOLLOWERS_COLLECTION as string)
   }
-  //trong file .env thêm DB_FOLLOWERS_COLLECTION = 'followers'
+
+  async indexFollowers() {
+    const exists = await this.users.indexExists(['user_id_1', 'followed_user_id_1'])
+    if (exists) return
+    await this.followers.createIndex({ user_id: 1, followed_user_id: 1 })
+  }
 }
 const databaseService = new DatabaseService()
 export default databaseService
