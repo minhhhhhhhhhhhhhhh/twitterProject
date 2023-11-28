@@ -1,7 +1,8 @@
 import { JwtPayload } from 'jsonwebtoken'
-import { TokenType, UserVerifyStatus } from '~/constants/enums'
+import { TokenType, TweetAudience, TweetType, UserVerifyStatus } from '~/constants/enums'
 import User from '../schemas/User.schema'
 import { ParamsDictionary } from 'express-serve-static-core'
+import { Media } from '../Other'
 
 export interface RegisterReqBody {
   name: string

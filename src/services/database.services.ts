@@ -3,6 +3,7 @@ import { config } from 'dotenv'
 import User from '~/models/schemas/User.schema'
 import RefreshToken from '~/models/schemas/RefreshToken.schema'
 import { Follower } from '~/models/schemas/Followers.schema'
+import Tweet from '~/models/schemas/Tweet.schema'
 config()
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@tweetproject.p1mfiex.mongodb.net/?retryWrites=true&w=majority`
 
@@ -57,6 +58,10 @@ class DatabaseService {
     const exists = await this.users.indexExists(['user_id_1', 'followed_user_id_1'])
     if (exists) return
     await this.followers.createIndex({ user_id: 1, followed_user_id: 1 })
+  }
+
+  get tweets(): Collection<Tweet> {
+    return this.db.collection(process.env.DB_TWEETS_COLLECTION as string)
   }
 }
 const databaseService = new DatabaseService()
